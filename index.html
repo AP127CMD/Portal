@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AP127 Portal</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d1117;color:#e6edf3;font-family:'JetBrains Mono',monospace,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px}
+  .header{text-align:center;margin-bottom:36px}
+  .logo{font-size:11px;letter-spacing:.2em;color:#58a6ff;text-transform:uppercase;margin-bottom:8px}
+  .title{font-size:26px;font-weight:700;letter-spacing:.06em;color:#e6edf3}
+  .subtitle{font-size:11px;color:#6e7681;margin-top:6px;letter-spacing:.08em}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:640px}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;cursor:pointer;text-decoration:none;display:block;transition:border-color .15s,background .15s}
+  .card:hover{border-color:#58a6ff;background:#1c2128}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+  .card-name{font-size:15px;font-weight:700;color:#e6edf3;letter-spacing:.05em}
+  .live-dot{font-size:9px;color:#3fb950;letter-spacing:.06em}
+  .card-desc{font-size:10px;color:#8b949e;line-height:1.6;margin-bottom:12px}
+  .card-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #21262d;padding-top:10px}
+  .card-refresh{font-size:8px;color:#6e7681;letter-spacing:.05em}
+  .card-url{font-size:8px;color:#58a6ff;letter-spacing:.02em}
+  .footer{margin-top:32px;font-size:9px;color:#6e7681;letter-spacing:.08em}
+  .card-ops  {border-top:2px solid #58a6ff}
+  .card-v2   {border-top:2px solid #d2a8ff}
+  .card-admin{border-top:2px solid #ffa657}
+  .card-share{border-top:2px solid #3fb950}
+  @media(max-width:480px){.grid{grid-template-columns:1fr}.title{font-size:20px}}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">◆ AP127 COMMAND</div>
+    <div class="title">PORTAL</div>
+    <div class="subtitle">ALL SYSTEMS · CLOUDFLARE EDGE</div>
+  </div>
+
+  <div class="grid">
+    <a class="card card-ops" href="https://ap127-cmd-ctr.pages.dev" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name">CMD CTR</div>
+        <div class="live-dot">● LIVE</div>
+      </div>
+      <div class="card-desc">Flight ops dashboard — Board · Gantt · Weekly · Roster · Analytics · Auto Slot Finder</div>
+      <div class="card-footer">
+        <div class="card-refresh">↻ every 30 min</div>
+        <div class="card-url">ap127-cmd-ctr.pages.dev</div>
+      </div>
+    </a>
+
+    <a class="card card-v2" href="https://ap127-cmdv2.pages.dev" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name">CMDV2</div>
+        <div class="live-dot">● LIVE</div>
+      </div>
+      <div class="card-desc">Unified ops + progress — all views · cross-check · student lens · training program</div>
+      <div class="card-footer">
+        <div class="card-refresh">↻ hourly</div>
+        <div class="card-url">ap127-cmdv2.pages.dev</div>
+      </div>
+    </a>
+
+    <a class="card card-admin" href="https://ap127-db001.pages.dev" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name">DB001</div>
+        <div class="live-dot">● LIVE</div>
+      </div>
+      <div class="card-desc">Admin dashboard — Training program · School performance · Simulation · All batches</div>
+      <div class="card-footer">
+        <div class="card-refresh">↻ every 5 min</div>
+        <div class="card-url">ap127-db001.pages.dev</div>
+      </div>
+    </a>
+
+    <a class="card card-share" href="https://ap127-dashboardr1.pages.dev" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name">DB SHARE</div>
+        <div class="live-dot">● LIVE</div>
+      </div>
+      <div class="card-desc">Student-facing site — AP127 detail · cohort progress · ranking · flight timeline</div>
+      <div class="card-footer">
+        <div class="card-refresh">↻ auto-sync</div>
+        <div class="card-url">ap127-dashboardr1.pages.dev</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="footer">AP127CMD · CLOUDFLARE PAGES · 2026</div>
+</body>
+</html>
