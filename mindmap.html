@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AP127 System Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo { font-size: 11px; letter-spacing: .2em; color: #58a6ff; margin-bottom: 6px; }
+  .title { font-size: 22px; font-weight: 700; letter-spacing: .06em; }
+  .subtitle { font-size: 10px; color: #6e7681; margin-top: 4px; letter-spacing: .1em; }
+  .diagram-wrap {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 32px 24px;
+    overflow-x: auto;
+  }
+  .mermaid { display: flex; justify-content: center; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    justify-content: center; margin-top: 28px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b949e; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">◆ AP127 COMMAND</div>
+  <div class="title">SYSTEM ARCHITECTURE</div>
+  <div class="subtitle">DATA SOURCES → PIPELINE → LIVE SITES</div>
+</div>
+
+<div class="diagram-wrap">
+<div class="mermaid">
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#161b22",
+    "primaryColor": "#1c2128",
+    "primaryTextColor": "#e6edf3",
+    "primaryBorderColor": "#30363d",
+    "lineColor": "#58a6ff",
+    "secondaryColor": "#21262d",
+    "tertiaryColor": "#0d1117",
+    "edgeLabelBackground": "#161b22",
+    "clusterBkg": "#1c2128",
+    "clusterBorder": "#30363d",
+    "titleColor": "#e6edf3",
+    "fontFamily": "JetBrains Mono, monospace"
+  }
+}}%%
+flowchart TD
+
+  %% ── DATA SOURCES ──────────────────────────────────────────
+  subgraph SRC["  📊  DATA SOURCES  "]
+    GS["🗂 Google Sheets\nStudent data · Curriculum · Schedule\n(multiple CSV tabs)"]
+    FOP["🌐 Flight Ops Portal\nExternal web portal\n(live flight schedule)"]
+  end
+
+  %% ── APPS SCRIPT RELAY ──────────────────────────────────────
+  GAS["⚙️ Google Apps Script\nRELAY_URL\nExposes Sheets as HTTP endpoint"]
+
+  %% ── DISPATCHER ─────────────────────────────────────────────
+  DISP["⚡ CF Dispatcher Worker\nFires every 5 min\ndispatcher/worker.js\n(deployed on Cloudflare)"]
+
+  %% ── GITHUB ACTIONS ─────────────────────────────────────────
+  subgraph GHA["  ⚙️  GITHUB ACTIONS WORKFLOWS  "]
+    direction LR
+    WF1["CMD_CTR\nfetch_schedule.yml\nPlaywright → scrape portal\n→ flight_schedule.json\n→ flight-data.js\nEvery 30 min"]
+    WF2["DB001\nupdate-cache.yml\nFetch Sheets via relay\n→ cache.json\n→ build-student.js\n→ push-to-kv.js\n→ sync-dashboardr1.js\nEvery 5 min"]
+    WF3["CMDV2\nrefresh-data.yml\nMirror upstream snapshots\n→ flight-data.js\n→ progress-data.js\n→ ngt-data.js\nHourly"]
+  end
+
+  %% ── CLOUDFLARE INFRA ────────────────────────────────────────
+  subgraph CF["  ☁️  CLOUDFLARE INFRASTRUCTURE  "]
+    KV["KV Namespace\nAP127_STUDENT_DATA\nkey: ap127_slice"]
+    API["Worker: ap127-data-api\nhttps://ap127-data-api\n.anusorn-tanmetha\n.workers.dev\nServes AP127 JSON"]
+  end
+
+  %% ── GITHUB REPOS ─────────────────────────────────────────────
+  subgraph REPOS["  🗄️  GITHUB REPOS  (AP127CMD)  "]
+    direction LR
+    R1["CMD_CTR\nflight-data.js\n+ full app code"]
+    R2["DB001\ncache.json\nstudent.html\n+ full app code"]
+    R3["CMDV2\nflight-data.js\nprogress-data.js\nngt-data.js\n+ full app code"]
+    R4["DB_Share\nindex.html\n(student view)\n🔒 Private"]
+    R5["Portal\nindex.html\n(launcher)"]
+  end
+
+  %% ── LIVE SITES ───────────────────────────────────────────────
+  subgraph SITES["  🚀  LIVE SITES  "]
+    direction LR
+    S1["ap127-cmd-ctr\n.pages.dev\n☁️ Cloudflare Pages"]
+    S2["ap127-cmdv2\n.pages.dev\n☁️ Cloudflare Pages"]
+    S3["ap127-db001\n.pages.dev\n☁️ Cloudflare Pages"]
+    S4["ap127-dashboardr1\n.pages.dev\n☁️ Cloudflare Pages"]
+    S5["ap127cmd.github.io\n/Portal/\n🐙 GitHub Pages"]
+  end
+
+  %% ── EDGES ────────────────────────────────────────────────────
+
+  %% Sources → relay / scraper
+  GS -->|"CSV over HTTPS"| GAS
+  GAS -->|"JSON response"| WF2
+  FOP -->|"Playwright scrapes\nheadless Chromium"| WF1
+
+  %% Dispatcher → workflows
+  DISP -->|"workflow_dispatch"| WF1
+  DISP -->|"workflow_dispatch"| WF2
+  DISP -->|"workflow_dispatch"| WF3
+
+  %% WF1 outputs
+  WF1 -->|"git commit + push\nflight-data.js"| R1
+
+  %% WF2 outputs
+  WF2 -->|"git commit + push\ncache.json + student.html"| R2
+  WF2 -->|"push-to-kv.js\nAP127 slice"| KV
+  WF2 -->|"sync-dashboardr1.js\nvia GitHub API"| R4
+
+  %% KV → API Worker
+  KV -->|"KV binding"| API
+
+  %% WF3 pulls from upstream repos and API
+  R1 -->|"raw.githubusercontent.com\nflight-data.js"| WF3
+  API -->|"live JSON fetch"| WF3
+  R2 -->|"raw.githubusercontent.com\ncache.json"| WF3
+  WF3 -->|"git commit + push\n3 data snapshots"| R3
+
+  %% Repos → CF Pages (auto-deploy on push)
+  R1 -->|"CF Pages\nauto-deploy"| S1
+  R2 -->|"CF Pages\nauto-deploy\n+ secret injection"| S3
+  R3 -->|"CF Pages\nauto-deploy"| S2
+  R4 -->|"CF Pages\nauto-deploy"| S4
+  R5 -->|"GitHub Pages\nauto-deploy"| S5
+
+  %% In-browser live fetch fallback
+  API -.->|"live fetch\nin browser"| S2
+  API -.->|"live fetch\nin browser"| S4
+
+  %% Styling
+  classDef source    fill:#2d1b00,stroke:#ffa657,color:#ffa657
+  classDef relay     fill:#1a1a2e,stroke:#a371f7,color:#a371f7
+  classDef dispatcher fill:#0d2137,stroke:#58a6ff,color:#58a6ff
+  classDef workflow  fill:#0d2137,stroke:#58a6ff,color:#e6edf3
+  classDef cfinfra   fill:#1a2b1a,stroke:#3fb950,color:#3fb950
+  classDef repo      fill:#1c2128,stroke:#30363d,color:#8b949e
+  classDef site      fill:#1f1635,stroke:#d2a8ff,color:#d2a8ff
+  classDef portal    fill:#161b22,stroke:#58a6ff,color:#58a6ff
+
+  class GS,FOP source
+  class GAS relay
+  class DISP dispatcher
+  class WF1,WF2,WF3 workflow
+  class KV,API cfinfra
+  class R1,R2,R3,R4,R5 repo
+  class S1,S2,S3,S4 site
+  class S5 portal
+</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#ffa657"></div> Data Source</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a371f7"></div> Apps Script Relay</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div> CF Dispatcher / GHA</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div> Cloudflare Infra (KV + Worker)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#30363d"></div> GitHub Repos</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div> Live Sites (CF Pages)</div>
+  <div class="legend-item">╌╌ dashed = in-browser live fetch fallback</div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#161b22',
+      primaryColor: '#1c2128',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      fontFamily: 'JetBrains Mono, monospace'
+    },
+    flowchart: { curve: 'basis', padding: 20 }
+  });
+</script>
+</body>
+</html>
